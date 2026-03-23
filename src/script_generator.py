@@ -4,6 +4,11 @@ from rich.text import Text
 import json
 import os
 from datetime import datetime
+import requests
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 console = Console()
 
@@ -58,6 +63,65 @@ def generate_script(topic, style="educational"):
         "cta": cta
     }
 
+def generate_ai_script(topic, style="educational"):
+    from openai import OpenAI
+    
+    client = OpenAI(
+        base_url="https://router.huggingface.co/v1",
+        api_key=os.getenv("HUGGINGFACE_API_TOKEN")
+    )
+    
+    try:
+        completion = client.chat.completions.create(
+            model="meta-llama/Llama-3.1-8B-Instruct",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a professional YouTube script writer."
+                },
+                {
+    "role": "user",
+    "content": f"""Write a detailed YouTube script about '{topic}' in a {style} style.
+
+The script should be 3-5 minutes long when read aloud.
+
+Use this exact structure:
+
+HOOK (30 seconds): A powerful opening line that grabs attention immediately
+
+PROBLEM (1 minute): Explain the core problem or question this video answers
+
+MAIN POINT 1 (1 minute): First key insight with explanation and example
+
+MAIN POINT 2 (1 minute): Second key insight with explanation and example
+
+MAIN POINT 3 (1 minute): Third key insight with explanation and example
+
+CONCLUSION (30 seconds): Wrap up the key takeaways
+
+CTA (15 seconds): Call to action to subscribe, like and comment
+
+Write in a conversational tone like you are talking directly to the viewer."""
+}
+            ],
+            max_tokens=1000
+        )
+        
+        generated_text = completion.choices[0].message.content
+        
+        return {
+            "topic": topic,
+            "style": style,
+            "generated_text": generated_text,
+            "source": "llama-3.1-8b"
+        }
+        
+    except Exception as e:
+        return {
+            "error": str(e),
+            "detail": repr(e)
+        }
+
 def display_script(script):
     console.print(Panel(f"[bold yellow]Topic:[/] {script['topic']}", title="Creator AI Pipeline"))
     console.print(f"\n[bold green]HOOK:[/] {script['hook']}")
@@ -87,6 +151,14 @@ def main():
     script = generate_script(topic, style)
     display_script(script)
     save_script(script) 
+    console.print("\n[bold]Generating AI script...[/]\n")
+    ai_script = generate_ai_script(topic, style)
+
+    if "error" in ai_script:
+        console.print(f"[bold red]Error:[/] {ai_script['error']}")
+        console.print(f"[bold red]Detail:[/] {ai_script.get('detail', 'no detail')}")
+    else:
+      console.print(Panel(ai_script["generated_text"], title="AI Generated Script"))
 
 if __name__ == "__main__":
     main()
