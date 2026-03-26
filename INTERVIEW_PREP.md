@@ -1,191 +1,166 @@
 # Interview Prep — Creator AI Pipeline
 
-These are real interview questions based on exactly what you built.
-Updated as you build more features.
+Real interview questions based on exactly what you built.
+Updated every time a new feature is added.
 
 ---
 
 ## Python Basics
 
 **Q: What is a virtual environment and why do you use it?**
-A: A virtual environment is an isolated Python environment for each project. It keeps project dependencies separate so they don't conflict with each other. Similar to node_modules in JavaScript. You create it with `python -m venv .venv` and activate it with `source .venv/bin/activate`.
-
----
-
-**Q: What is the difference between a list and a dictionary in Python?**
-A: A list is an ordered collection of items accessed by index — like `points[0]`. A dictionary is a key-value store accessed by key — like `script["topic"]`. In our project, we store script data as a dictionary and the 3 main points as a list inside it.
-
----
+A: A virtual environment is an isolated Python environment for each project. It keeps dependencies separate so they don't conflict. Similar to node_modules in JavaScript. Created with `python -m venv .venv` and activated with `source .venv/bin/activate`.
 
 **Q: What are f-strings in Python?**
-A: f-strings are a way to embed variables inside strings. You prefix the string with f and put the variable in curly braces. For example `f"Today we will learn about {topic}"`. They are the Python equivalent of template literals in JavaScript.
-
----
-
-**Q: What is the difference between `*args` and `**kwargs` in Python?**
-A: `*args` allows a function to accept any number of positional arguments as a tuple. `**kwargs` allows any number of keyword arguments as a dictionary. For example `def func(*args, **kwargs)`. Used in many AI libraries internally.
-
----
+A: f-strings embed variables inside strings using curly braces with an f prefix. For example `f"Today we learn about {topic}"`. Equivalent to template literals in JavaScript.
 
 **Q: What does `if __name__ == "__main__"` mean?**
-A: It means — only run this code if this file is being run directly, not when it is imported by another file. In our project, `script_generator.py` has this so the `main()` function only runs when you call the file directly, not when `api.py` imports it.
-
----
+A: It means only run this code if the file is run directly, not when imported by another file. Our `script_generator.py` uses this so `main()` only runs when called directly, not when `api.py` imports it.
 
 **Q: What is a decorator in Python?**
-A: A decorator is a function that wraps another function to add extra behaviour. In FastAPI we use decorators like `@app.get("/")` and `@app.post("/generate-script")` to define API routes. They are similar to middleware in Express.js.
-
----
+A: A decorator wraps a function to add extra behaviour. FastAPI uses decorators like `@app.get("/")` to define routes. Similar to middleware in Express.js.
 
 **Q: How do you read and write files in Python?**
-A: Using the `open()` function with a `with` statement. For example:
-```python
-with open("file.json", "w") as f:
-    json.dump(data, f, indent=4)
-```
-The `with` statement automatically closes the file when done — even if an error occurs.
+A: Using `open()` with a `with` statement. The `with` statement automatically closes the file even if an error occurs. We used `json.dump()` to save scripts to JSON files.
 
----
+**Q: What is list comprehension?**
+A: A concise way to create lists in one line. For example `[s.id for s in scripts]` instead of a full for loop. Used heavily in AI and data processing code.
 
-**Q: What is the difference between `json.dump` and `json.dumps`?**
-A: `json.dump` writes JSON to a file object. `json.dumps` converts JSON to a string. In our project we use `json.dump` to save scripts directly to a file.
-
----
-
-**Q: What is list comprehension in Python?**
-A: A concise way to create lists in one line. For example `[x * 2 for x in numbers]` instead of writing a full for loop. Used heavily in AI and data processing code.
-
----
-
-**Q: What is `os.makedirs` and why did you use `exist_ok=True`?**
-A: `os.makedirs` creates a folder and all parent folders if they don't exist. `exist_ok=True` means don't throw an error if the folder already exists. We used it to create the `data/` folder automatically when saving scripts.
+**Q: What is `os.makedirs` and why use `exist_ok=True`?**
+A: `os.makedirs` creates a folder and all parent folders. `exist_ok=True` prevents an error if the folder already exists. We used it to create the `data/` folder automatically.
 
 ---
 
 ## FastAPI
 
 **Q: What is FastAPI and why did you choose it?**
-A: FastAPI is a modern Python web framework for building REST APIs. We chose it because it is fast, automatically generates API documentation at `/docs`, uses Python type hints for validation, and is async-first. It is similar to Express.js in JavaScript but more powerful for AI applications.
+A: FastAPI is a modern Python REST API framework. We chose it because it auto-generates docs at `/docs`, uses type hints for validation, is async-first, and is very similar to Express.js.
 
----
-
-**Q: What is Pydantic and how does it work with FastAPI?**
-A: Pydantic is a data validation library. In FastAPI we define request and response shapes using Pydantic models — classes that inherit from `BaseModel`. FastAPI automatically validates incoming requests against these models and returns clear error messages if the data is wrong.
-
----
-
-**Q: What is the difference between `@app.get` and `@app.post`?**
-A: `@app.get` handles GET requests — used for fetching data. `@app.post` handles POST requests — used for sending data to create something. In our project, `GET /` returns a welcome message and `POST /generate-script` takes a topic and style and returns a script.
-
----
+**Q: What is Pydantic?**
+A: Pydantic validates request and response data. We define shapes using classes that inherit from `BaseModel`. FastAPI automatically validates incoming requests and returns clear errors if data is wrong.
 
 **Q: What is Uvicorn?**
-A: Uvicorn is an ASGI server that runs FastAPI applications. It is the equivalent of nodemon in JavaScript. The `--reload` flag makes it automatically restart when you change your code during development.
+A: Uvicorn is an ASGI server that runs FastAPI. Equivalent to nodemon in JavaScript. The `--reload` flag restarts automatically when code changes.
+
+**Q: What is the `/docs` endpoint?**
+A: FastAPI auto-generates interactive Swagger UI documentation at `/docs`. You can test all endpoints directly in the browser without writing any frontend code.
+
+**Q: What is dependency injection in FastAPI?**
+A: FastAPI's `Depends()` function injects dependencies into route handlers. We use `db: Session = Depends(get_db)` to automatically provide a database session to every route that needs one — and automatically close it when done.
+
+**Q: What is the difference between `@app.get` and `@app.post` and `@app.delete`?**
+A: These correspond to HTTP methods. GET fetches data, POST creates data, DELETE removes data. We use all three for our scripts CRUD API.
 
 ---
 
-**Q: What is the `/docs` endpoint in FastAPI?**
-A: FastAPI automatically generates interactive API documentation using Swagger UI at `/docs`. It lets you test all your endpoints directly in the browser without writing any frontend code. This is built in — you don't need to configure anything.
+## Databases and SQLAlchemy
 
----
+**Q: What is SQLAlchemy?**
+A: SQLAlchemy is Python's most popular database ORM (Object Relational Mapper). It lets you interact with databases using Python classes and objects instead of writing raw SQL. Like Prisma or Sequelize in the JavaScript world.
 
-**Q: How do you handle different request body structures in FastAPI?**
-A: By defining a Pydantic model for the request body. For example:
-```python
-class ScriptRequest(BaseModel):
-    topic: str
-    style: str = "educational"
-```
-The `= "educational"` sets a default value so the field is optional.
+**Q: What is an ORM?**
+A: ORM stands for Object Relational Mapper. It maps database tables to Python classes. Instead of writing `SELECT * FROM scripts` you write `db.query(Script).all()`. Much safer and more readable than raw SQL.
 
----
+**Q: What is SQLite and why did you use it?**
+A: SQLite is a lightweight database that stores everything in a single file. It is built into Python — no server needed, no installation. Perfect for development and early stage products. We used it because it requires zero configuration and works immediately.
 
-**Q: What is async in FastAPI and when would you use it?**
-A: FastAPI supports async route handlers using `async def` instead of `def`. You use async when your route needs to make external API calls or database queries — so it doesn't block other requests while waiting. For our Hugging Face API calls we will use async.
+**Q: How does your database session management work?**
+A: We use a `get_db()` generator function that creates a database session, yields it to the route handler, then closes it automatically in the `finally` block. FastAPI's `Depends()` handles this lifecycle automatically.
 
----
+**Q: What is a primary key?**
+A: A unique identifier for each row in a database table. In our scripts table, `id` is the primary key — it auto-increments so every script gets a unique number automatically.
 
-## Git and GitHub
+**Q: What does `index=True` mean on a SQLAlchemy column?**
+A: It creates a database index on that column, making queries that filter by that column much faster. We indexed the `topic` column so searching scripts by topic is fast even with thousands of records.
 
-**Q: What is the difference between `git add`, `git commit`, and `git push`?**
-A: `git add` stages your changes — tells git which files to include. `git commit` saves a snapshot of those changes locally with a message. `git push` uploads your commits to GitHub so others can see them.
+**Q: What is the difference between `db.add()`, `db.commit()`, and `db.refresh()`?**
+A: `db.add()` stages the new record in memory. `db.commit()` saves it permanently to the database. `db.refresh()` reloads the record from the database so we get the auto-generated ID and timestamp back.
 
----
-
-**Q: What is a `.gitignore` file?**
-A: A file that tells git which files and folders to never track or push to GitHub. We added `.env` to `.gitignore` so our secret API tokens never get pushed to GitHub accidentally.
-
----
-
-**Q: What is an SSH key and why did you use it?**
-A: An SSH key is a cryptographic key pair used to authenticate with GitHub without a password. We used it so we could push to our personal GitHub account from a laptop that is also connected to a company GitHub account — using separate SSH keys for each.
-
----
-
-**Q: Why did you use port 443 for SSH?**
-A: Port 22 is the default SSH port but many corporate networks block it. Port 443 is the HTTPS port which is almost never blocked. GitHub supports SSH over port 443 via `ssh.github.com` for exactly this reason.
+**Q: How would you migrate to PostgreSQL when you scale?**
+A: Change one line — the `DATABASE_URL` in `database.py` from `sqlite:///./data/scripts.db` to `postgresql://user:password@host/dbname`. SQLAlchemy handles the rest because all our queries use the ORM, not raw SQL.
 
 ---
 
 ## System Design
 
 **Q: How is your project structured and why?**
-A: The project follows a separation of concerns pattern. `script_generator.py` handles the business logic of generating and saving scripts. `api.py` handles HTTP routing and request validation. This means if we want to change how scripts are generated, we only touch one file — not the API layer.
+A: Separation of concerns. `script_generator.py` handles business logic. `database.py` handles data models and DB connection. `api.py` handles HTTP routing. Each file has one responsibility — easy to maintain and test independently.
 
----
+**Q: Why did you use SQLite instead of PostgreSQL?**
+A: SQLite requires zero setup and is perfect for development and early stage products. When we get real users we switch to PostgreSQL by changing one line — the database URL. SQLAlchemy abstracts away the database-specific code.
 
-**Q: Where do you store generated scripts and why JSON?**
-A: In a `data/` folder as individual JSON files with timestamps in the filename. JSON is human readable, easy to parse, and works well with Python's built-in `json` library. Each file has a timestamp so scripts never overwrite each other.
+**Q: What is CRUD and how did you implement it?**
+A: CRUD stands for Create, Read, Update, Delete — the four basic database operations. We implemented Create with `POST /generate-script`, Read with `GET /scripts` and `GET /scripts/{id}`, and Delete with `DELETE /scripts/{id}`. Update comes next.
 
----
-
-**Q: How would you scale this API if 1000 users were using it simultaneously?**
-A: Currently the API is synchronous and single server. To scale we would make route handlers async, add a task queue like Celery for heavy AI processing, deploy multiple instances behind a load balancer on AWS or GCP, and use a database like PostgreSQL instead of saving to JSON files.
-
----
+**Q: How would you add pagination to the GET /scripts endpoint?**
+A: Add `skip` and `limit` parameters. For example `db.query(Script).offset(skip).limit(limit).all()`. Then the API accepts `?skip=0&limit=10` query parameters. This prevents returning thousands of records at once.
 
 **Q: What would you add to make this production ready?**
-A: Authentication so only registered users can call the API, rate limiting so users can't abuse it, a proper database instead of JSON files, error handling and logging, environment-based configuration, and CI/CD pipeline for automatic deployment.
+A: User authentication so each user only sees their own scripts, rate limiting, error handling and logging, environment-based configuration, input validation, and a CI/CD pipeline for automatic deployment.
 
 ---
 
-## AI and Machine Learning (Coming Soon — update as you build)
+## AI and Machine Learning
 
 **Q: What is Hugging Face?**
-A: Hugging Face is the largest open source AI platform. It hosts thousands of pretrained models that developers can use for free. It is like npm but for AI models. We use their Inference API to generate scripts without needing a GPU.
+A: The largest open source AI platform. Hosts thousands of pretrained models. Like npm but for AI models. We use their router API to call LLaMA 3.1 without needing our own GPU.
 
-**Q: What is the difference between training a model and using a pretrained model?**
-A: Training a model means teaching it from scratch on a dataset — requires massive compute and data. Using a pretrained model means taking a model someone else already trained and either using it directly or fine-tuning it on your own smaller dataset. We use pretrained models to save time and cost.
+**Q: What is LLaMA?**
+A: LLaMA (Large Language Model Meta AI) is Meta's open source language model. The 3.1 8B version has 8 billion parameters and is free to use. It generates human-like text from prompts.
+
+**Q: What is the difference between a base model and an instruct model?**
+A: A base model just predicts the next token — it completes text. An instruct model is fine-tuned to follow instructions and have conversations. We use `llama3.1:8b-instruct` — the instruct version — because we want it to follow our script writing instructions.
+
+**Q: What is prompt engineering?**
+A: Designing the text instructions you send to an AI model to get the best output. We engineered our prompt to specify the exact script structure — HOOK, PROBLEM, MAIN POINTS, CTA — and the style. Better prompts = better scripts.
+
+**Q: What is the difference between training and inference?**
+A: Training teaches a model by updating its parameters on a large dataset — costs millions of dollars. Inference is using an already trained model to generate responses — what we're doing. We never train from scratch, we use pretrained models.
 
 **Q: What is fine-tuning?**
-A: Fine-tuning means taking a pretrained model and training it further on your own specific data. For example taking LLaMA and training it on 1000 YouTube scripts so it generates better YouTube-style content. It is much cheaper than training from scratch.
+A: Taking a pretrained model and training it further on your own specific data. We plan to fine-tune LLaMA on thousands of viral YouTube scripts so it generates better creator-specific content than a general model.
 
 **Q: What is LoRA?**
-A: LoRA stands for Low-Rank Adaptation. It is a technique that lets you fine-tune a large model by only updating a small number of extra parameters instead of all billions of parameters. This makes fine-tuning much faster and cheaper while achieving similar results.
+A: Low-Rank Adaptation — a technique to fine-tune large models by only updating a small number of extra parameters instead of all billions. Makes fine-tuning fast and cheap while achieving similar results to full fine-tuning.
+
+**Q: What is tokenization?**
+A: Converting text into numbers (tokens) that the model can process. "revolt of 1857" becomes something like [1494, 310, 220]. LLaMA has a vocabulary of 32,000 tokens. This is the first step in every LLM inference call.
+
+**Q: What is the Hugging Face router and why did you use it?**
+A: The Hugging Face router is their new inference API endpoint that replaced the old api-inference.huggingface.co. It uses an OpenAI-compatible format so we can use the OpenAI SDK to call it, making our code very clean and portable.
+
+---
+
+## Git and GitHub
+
+**Q: What is the difference between git add, git commit, and git push?**
+A: `git add` stages changes. `git commit` saves a snapshot locally with a message. `git push` uploads commits to GitHub.
+
+**Q: What is a .gitignore file?**
+A: Tells git which files never to track. We added `.env` so API tokens never get pushed to GitHub accidentally, and `.venv/` so the virtual environment (hundreds of MB) never gets committed.
+
+**Q: What is an SSH key and why did you use it?**
+A: An SSH key authenticates with GitHub without a password. We used it to push to a personal GitHub account from a laptop also connected to a company account — using separate SSH keys for each.
+
+**Q: Why did you use port 443 for SSH?**
+A: Port 22 (default SSH) is blocked on many corporate networks. Port 443 (HTTPS) is almost never blocked. GitHub supports SSH over port 443 via ssh.github.com.
 
 ---
 
 ## Behavioural Questions
 
 **Q: Tell me about a project you built from scratch.**
-A: Talk about this project — explain the problem (creators spending hours on scripts), the solution (AI pipeline that generates scripts automatically), the tech stack, and what you learned. Mention that you built it while learning Python simultaneously.
-
----
+A: Talk about this project — the problem (creators spending hours on scripts), the solution (AI pipeline), tech stack, and what you learned. Mention you built it while learning Python simultaneously — shows ability to learn fast and ship real things.
 
 **Q: How do you learn new technologies?**
-A: Talk about your learn-apply-repeat approach — you don't just watch tutorials, you immediately apply each concept to your real project. Every Corey Schafer video you watched was immediately used in the creator AI pipeline.
-
----
+A: Learn-apply-repeat. Never just watch tutorials — immediately apply each concept to a real project. Every Python concept learned was used the same day in the creator AI pipeline.
 
 **Q: How do you handle being stuck on a problem?**
-A: Under 15 minutes — Google the exact error. Under 30 minutes — ask AI tools like Claude with full context. Over 30 minutes — identify the knowledge gap, go back to the relevant resource, then return to the problem. Never spend more than 30 minutes stuck without seeking help.
+A: Under 15 minutes — Google the exact error. Under 30 minutes — ask AI tools with full context. Over 30 minutes — identify the knowledge gap, go back to the source, then return. Never spend more than 30 minutes stuck without seeking help.
+
+**Q: How did you handle the Hugging Face API changing their endpoint?**
+A: When the old endpoint returned a 410 error with a message pointing to the new router URL, I read the error message carefully, updated the URL and payload format to match their new OpenAI-compatible API, and tested until it worked. Error messages are documentation — read them carefully.
 
 ---
 
-**Q: Why do you want to work in AI?**
-A: Be honest — talk about building this project, discovering how AI pipelines work, the excitement of connecting models to real products, and the massive career opportunity in AI engineering right now.
-
----
-
-*This file is updated every time a new feature is built.*
-*Last updated: Day 1*
+*Updated every time a new feature is built.*
+*Last updated: Day 1 — Database + CRUD complete*

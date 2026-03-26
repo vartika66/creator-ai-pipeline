@@ -18,9 +18,12 @@ An AI-powered tool that helps YouTubers and influencers automatically generate s
 - **Python** — core language
 - **FastAPI** — REST API framework
 - **Uvicorn** — server to run the API
-- **Rich** — beautiful terminal output
+- **SQLAlchemy** — database ORM
+- **SQLite** — database (zero config, built into Python)
 - **Pydantic** — data validation
-- **JSON** — saving script data
+- **Rich** — beautiful terminal output
+- **OpenAI SDK** — used to call Hugging Face router
+- **LLaMA 3.1 8B** — AI model via Hugging Face router
 
 ---
 
@@ -30,9 +33,12 @@ An AI-powered tool that helps YouTubers and influencers automatically generate s
 creator-ai-pipeline/
 ├── src/
 │   ├── __init__.py
-│   ├── script_generator.py   ← generates scripts by topic and style
-│   └── api.py                ← FastAPI REST API
-├── data/                     ← saved scripts as JSON files
+│   ├── script_generator.py   ← generates scripts (template + AI)
+│   ├── api.py                ← FastAPI REST API
+│   └── database.py           ← SQLAlchemy models and DB setup
+├── data/
+│   ├── scripts.db            ← SQLite database
+│   └── script_*.json         ← legacy JSON saves
 ├── logs/                     ← log files (coming soon)
 ├── tests/                    ← tests (coming soon)
 ├── .env                      ← environment variables (never pushed to GitHub)
@@ -64,16 +70,27 @@ source .venv/bin/activate
 ### Step 3 — Install dependencies
 
 ```bash
-pip install fastapi uvicorn rich
+pip install fastapi uvicorn rich sqlalchemy python-dotenv openai requests
 ```
 
-### Step 4 — Run the API
+### Step 4 — Add environment variables
+
+Create a `.env` file in the root:
+
+```
+HUGGINGFACE_API_TOKEN=your_token_here
+```
+
+Get your token from huggingface.co/settings/tokens
+
+### Step 5 — Run the API
 
 ```bash
 uvicorn src.api:app --reload
 ```
 
-API will be live at: `http://127.0.0.1:8000`
+API live at: `http://127.0.0.1:8000`
+Docs at: `http://127.0.0.1:8000/docs`
 
 ---
 
@@ -92,79 +109,62 @@ Returns a welcome message.
 ---
 
 ### POST /generate-script
-Generates a video script based on topic and style.
+Generates a template-based video script and saves to database.
 
-**Request body:**
+**Request:**
 ```json
-{
-  "topic": "how to grow on youtube",
-  "style": "educational"
-}
+{ "topic": "how to grow on youtube", "style": "educational" }
 ```
 
-**Available styles:**
-- `educational` — teaches the audience step by step
-- `entertaining` — story based, day in the life format
-- `motivational` — inspires and pushes the audience to take action
+**Styles:** educational / entertaining / motivational
 
-**Response:**
+### POST /generate-ai-script
+Generates a full AI-powered script using LLaMA 3.1 8B.
+
+**Request:**
 ```json
-{
-  "topic": "how to grow on youtube",
-  "style": "educational",
-  "hook": "Today we are going to learn everything about how to grow on youtube.",
-  "problem": "Most people get this wrong because they skip the fundamentals.",
-  "points": [
-    "Step 1 - What exactly is how to grow on youtube and why it matters",
-    "Step 2 - The most important things to know about how to grow on youtube",
-    "Step 3 - How to apply this knowledge today"
-  ],
-  "cta": "Drop your questions in the comments below!"
-}
+{ "topic": "revolt of 1857", "style": "educational" }
 ```
 
-**Test it visually:**
-Go to `http://127.0.0.1:8000/docs` — FastAPI generates a full interactive UI automatically.
+### GET /scripts
+Returns all saved scripts ordered by most recent first.
+
+### GET /scripts/{script_id}
+Returns full details of a specific script by ID.
+
+### DELETE /scripts/{script_id}
+Deletes a script by ID.
 
 ---
 
-## How Scripts Are Saved
+## Database Schema
 
-Every time you generate a script, it is automatically saved as a JSON file inside the `data/` folder with a timestamp in the filename.
-
-Example: `data/script_2025-03-20_14-30-00.json`
-
----
-
-## What I Learned Building This
-
-### Python concepts used
-- Functions — `def generate_script()`, `def save_script()`
-- Dictionaries — storing script data as key value pairs
-- Lists — storing the 3 main points of each script
-- f-strings — building dynamic text from variables
-- if/elif/else — different script styles based on user input
-- File handling — saving scripts using `open()` and `with`
-- JSON — saving and reading structured data
-- imports — using external libraries like `rich`, `fastapi`
-- `os.makedirs` — creating folders from code
-- `datetime` — adding timestamps to saved files
-
-### Libraries used
-- `rich` — colourful terminal output with panels
-- `fastapi` — building REST APIs in Python
-- `uvicorn` — running the FastAPI server
-- `pydantic` — validating request and response data
+```
+scripts table
+├── id             INTEGER  primary key, auto increment
+├── topic          STRING   indexed
+├── style          STRING   educational / entertaining / motivational
+├── hook           TEXT
+├── problem        TEXT
+├── points         TEXT     JSON array
+├── cta            TEXT
+├── generated_text TEXT     full AI generated script
+├── source         STRING   template / llama-3.1-8b
+└── created_at     DATETIME auto set on creation
+```
 
 ---
 
 ## Roadmap
 
 - [x] Script generator with 3 styles
+- [x] AI script generation with LLaMA 3.1 8B
 - [x] Save scripts to JSON files
 - [x] FastAPI REST API
 - [x] Auto docs at /docs
-- [ ] Connect real AI model from Hugging Face
+- [x] SQLite database with SQLAlchemy
+- [x] Full CRUD endpoints
+- [ ] User authentication with JWT
 - [ ] Voice cloning with XTTS v2
 - [ ] Research agent with LangChain
 - [ ] Video generation
@@ -178,11 +178,12 @@ Example: `data/script_2025-03-20_14-30-00.json`
 | Date | What was built |
 |------|---------------|
 | Day 1 | Project setup, GitHub SSH, virtual environment |
-| Day 1 | Basic script generator with terminal output |
-| Day 1 | Style based script generation (educational, entertaining, motivational) |
-| Day 1 | Save scripts to JSON files with timestamps |
-| Day 1 | FastAPI REST API with /generate-script endpoint |
-| Day 1 | Auto documentation at /docs |
+| Day 1 | Script generator with 3 styles |
+| Day 1 | Save scripts to JSON files |
+| Day 1 | FastAPI REST API |
+| Day 1 | Connected LLaMA 3.1 8B via Hugging Face router |
+| Day 2 | SQLite database with SQLAlchemy |
+| Day 2 | Full CRUD endpoints |
 
 ---
 
